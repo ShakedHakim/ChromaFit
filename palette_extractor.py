@@ -18,7 +18,7 @@ class PaletteExtractor:
 
         order = np.argsort(counts)[::-1]
 
-        return [(tuple(centers[i]), counts[i] / total) for i in order]
+        return [(tuple(int(c) for c in centers[i]), counts[i] / total) for i in order]
 
 
 
