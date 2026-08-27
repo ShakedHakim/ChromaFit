@@ -1,4 +1,6 @@
 # this class is for color utilities
+from operator import truediv
+
 import cv2
 import numpy as np
 
@@ -18,11 +20,21 @@ class ColorUtils:
         return distance
 
     @staticmethod
-    def is_neutral(hsv: tuple) -> bool:
+    def is_neutral(hsv: tuple, sat_tol: int = 40, dark_tol: int = 60) -> bool:
         #True for blacks, whites, greys and other low-saturation colors.
         h, s, v = hsv
-        if s < 40:  # אפור, לבן, דהוי — הגוון חסר משמעות
+
+        if s < sat_tol:
             return True
-        if v < 40:  # כמעט שחור — הגוון לא נראה בכלל
+        if v < dark_tol:      # dark enough that hue is unreliable
             return True
         return False
+
+    @staticmethod
+    def are_similar(hsv1: tuple, hsv2: tuple, hue_tol: int = 10, sat_tol: int = 40, val_tol: int = 40) -> bool:
+        h1, s1, v1 = hsv1
+        h2, s2, v2 = hsv2
+
+        return (ColorUtils.hue_distance(h1, h2) < hue_tol
+                and abs(s1 - s2) < sat_tol
+                and abs(v1 - v2) < val_tol)

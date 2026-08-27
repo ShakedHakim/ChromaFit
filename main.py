@@ -1,25 +1,26 @@
 from repository import MockItemRepository
 from stylist_service import StylistService
 
-SOURCE_IMAGE = "shirt.jpg"
-SOURCE_CATEGORY = "top"
+IMAGES = ["shirt.jpg", "blue.jpg", "green.jpg", "black.jpg", "white.jpg"]
 
 
 def main():
     service = StylistService(MockItemRepository())
-    result = service.recommend(SOURCE_IMAGE, source_category=SOURCE_CATEGORY)
 
-    print("--- Color palette ---")
-    for color, pct in result["palette"]:
-        print(f"{color}  {pct:.1%}")
+    for path in IMAGES:
+        print(f"\n{'=' * 50}")
+        print(f"IMAGE: {path}")
+        print('=' * 50)
 
-    print("\n--- Recommended outfit ---")
-    for category, (item, score) in result["outfit"].items():
-        print(f"{category:<8} {item.name:<20} {item.to_hex()}  {score:.2f}")
+        result = service.recommend(path, source_category="top")
 
-    print("\n--- Full ranking ---")
-    for item, score in result["ranked"]:
-        print(f"{item.name:<20} {item.to_hex()}  {score:.2f}")
+        print("Palette:")
+        for color, pct in result["palette"]:
+            print(f"  {color}  {pct:.1%}")
+
+        print("Outfit:")
+        for category, (item, score) in result["outfit"].items():
+            print(f"  {category:<8} {item.name:<20} {score:.2f}")
 
 
 if __name__ == "__main__":

@@ -4,7 +4,8 @@ from color_utils import ColorUtils
 class ColorMatcher:
 #Scores items based on their color similarity to a given color.
 
-    NEUTRAL_SCORE = 0.7
+    NEUTRAL_BASE = 0.7
+    NEUTRAL_CONTRAST_BONUS = 0.2
     CATEGORIES = ("top", "bottom", "shoes")
 
     def score(self, color_rgb: tuple, item) -> float:
@@ -13,18 +14,19 @@ class ColorMatcher:
         item_hsv = ColorUtils.rgb_to_hsv(item.rgb_color)
 
         if ColorUtils.is_neutral(color_hsv) or ColorUtils.is_neutral(item_hsv):
-            return self.NEUTRAL_SCORE
+            contrast = abs(color_hsv[2] - item_hsv[2]) / 255
+            return self.NEUTRAL_BASE + contrast * self.NEUTRAL_CONTRAST_BONUS
 
         dist = ColorUtils.hue_distance(color_hsv[0], item_hsv[0])
 
         if dist < 10:
-            return 0.75  # אותו גוון
+            return 0.75  # same hue
         elif dist < 30:
-            return 0.85  # שכנים
+            return 0.85  # neibhboring hue
         elif dist < 75:
-            return 0.35  # לא קרוב אך לא מנוגד
+            return 0.35  # not close- but contrast
         else:
-            return 1.0  # משלים
+            return 1.0  # opposite hue
 
 
     def find_matches(self, color_rgb: tuple, items: list, top_n: int = 3, exclude_category: str = None) -> list:
