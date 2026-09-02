@@ -1,59 +1,58 @@
 from color_utils import ColorUtils
+from models import NamedColor
 
 
 class ColorMatcher:
-#Scores items based on their color similarity to a given color.
 
     NEUTRAL_BASE = 0.7
     NEUTRAL_CONTRAST_BONUS = 0.2
-    CATEGORIES = ("top", "bottom", "shoes")
+    SHOE_MAX_SATURATION = 180
+    SHOE_PENALTY = 0.6
 
-    def score(self, color_rgb: tuple, item) -> float:
-        # Convert both colors to HSV
-        color_hsv = ColorUtils.rgb_to_hsv(color_rgb)
-        item_hsv = ColorUtils.rgb_to_hsv(item.rgb_color)
+    def score(self, color_rgb: tuple, candidate: NamedColor,
+              target_category: str) -> float:
+        source_hsv = ColorUtils.rgb_to_hsv(color_rgb)
+        candidate_hsv = ColorUtils.rgb_to_hsv(candidate.rgb)
 
-        if ColorUtils.is_neutral(color_hsv) or ColorUtils.is_neutral(item_hsv):
-            contrast = abs(color_hsv[2] - item_hsv[2]) / 255
-            return self.NEUTRAL_BASE + contrast * self.NEUTRAL_CONTRAST_BONUS
-
-        dist = ColorUtils.hue_distance(color_hsv[0], item_hsv[0])
-
-        if dist < 10:
-            return 0.75  # same hue
-        elif dist < 30:
-            return 0.85  # neibhboring hue
-        elif dist < 75:
-            return 0.35  # not close- but contrast
+        if ColorUtils.is_neutral(source_hsv) or ColorUtils.is_neutral(candidate_hsv):
+            contrast = abs(source_hsv[2] - candidate_hsv[2]) / 255
+            result = self.NEUTRAL_BASE + contrast * self.NEUTRAL_CONTRAST_BONUS
         else:
-            return 1.0  # opposite hue
+            dist = ColorUtils.hue_distance(source_hsv[0], candidate_hsv[0])
 
+            if dist < 10:
+                result = 0.75      # same hue
+            elif dist < 30:
+                result = 0.85      # neighboring hue
+            elif dist < 75:
+                result = 0.35      # partial contrast — clashes
+            else:
+                result = 1.0       # complementary
 
-    def find_matches(self, color_rgb: tuple, items: list, top_n: int = 3, exclude_category: str = None) -> list:
-        if exclude_category is not None:
-            items = [item for item in items if item.category != exclude_category]
-        scored = [(item, self.score(color_rgb, item)) for item in items]
-        scored.sort(key=lambda pair: pair[1], reverse=True)
-        return scored[:top_n]
+        # shoes lean toward muted colors
+        if target_category == "shoes" and candidate_hsv[1] > self.SHOE_MAX_SATURATION:
+            result *= self.SHOE_PENALTY
 
+        return result
 
-    def build_outfit(self, color_rgb: tuple, items: list, source_category: str) -> dict:
-        outfit = {}
-
-        for category in self.CATEGORIES:
-            if category == source_category:
-                continue
-
-            in_category = [i for i in items if i.category == category]
-            matches = self.find_matches(color_rgb, in_category, top_n=1)
-
-            if matches:
-                outfit[category] = matches[0]
-
-        return outfit
-
-    def score_palette(self, palette: list, item) -> dict:
+    def score_palette(self, palette: list, candidate: NamedColor,
+                      target_category: str) -> float:
         total = 0.0
-        for c, w in palette:
-            total += self.score(c, item) * w
+        for color, weight in palette:
+            total += self.score(color, candidate, target_category) * weight
         return total
+
+    def recommend_colors(self, palette: list, colors: list,
+                         targets: list, top_n: int = 3) -> dict:
+        result = {}
+
+        for category in targets:
+            scored = []
+            for candidate in colors:
+                s = self.score_palette(palette, candidate, category)
+                scored.append((candidate, s))
+
+            scored.sort(key=lambda pair: pair[1], reverse=True)
+            result[category] = scored[:top_n]
+
+        return result

@@ -1,34 +1,51 @@
 from abc import ABC, abstractmethod
-from models import ClothingItem
+from models import NamedColor
+import sqlite3
 
 
-class ItemRepository(ABC):
-
-    @abstractmethod
-    def get_all(self) -> list[ClothingItem]:
-        pass
+class ColorRepository(ABC):
 
     @abstractmethod
-    def find_by_category(self, category: str) -> list[ClothingItem]:
+    def get_all(self) -> list[NamedColor]:
         pass
 
 
-class MockItemRepository(ItemRepository):
+
+class MockItemRepository(ColorRepository):
 
     def __init__(self):
-        self._items = [
-            ClothingItem("חולצה לבנה", (255, 255, 255), "top"),
-            ClothingItem("חולצת פסים כחולה", (60, 90, 160), "top"),
-            ClothingItem("סוודר בורדו", (128, 32, 48), "top"),
-            ClothingItem("ג'ינס כהה", (40, 55, 90), "bottom"),
-            ClothingItem("מכנסי חאקי", (190, 175, 130), "bottom"),
-            ClothingItem("חצאית שחורה", (25, 25, 25), "bottom"),
-            ClothingItem("סניקרס לבנות", (245, 245, 240), "shoes"),
-            ClothingItem("מגפי עור חום", (95, 60, 35), "shoes"),
+        self._colors = [
+            NamedColor("navy", (0, 0, 128)),
+            NamedColor("white", (255, 255, 255)),
+            NamedColor("black", (0, 0, 0)),
+            NamedColor("crimson", (220, 20, 60)),
+            NamedColor("olive", (128, 128, 0)),
+            NamedColor("tan", (210, 180, 140)),
         ]
 
-    def get_all(self) -> list[ClothingItem]:
-        return list(self._items)
+    def get_all(self) -> list[NamedColor]:
+        return list(self._colors)
 
-    def find_by_category(self, category: str) -> list[ClothingItem]:
-        return [item for item in self._items if item.category == category]
+
+class SqliteColorRepository(ColorRepository):
+    """Loads named colors from a SQLite database."""
+
+    def __init__(self, db_path: str = "chromafit.db"):
+        self.db_path = db_path
+
+    def _to_color(self, row) -> NamedColor:
+        """Convert a database row into a NamedColor."""
+        name = row[1]
+        rgb = (row[2], row[3], row[4])
+        return NamedColor(name, rgb)
+
+    def get_all(self) -> list[NamedColor]:
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM colors")
+            rows = cursor.fetchall()
+
+        colors = []
+        for row in rows:
+            colors.append(self._to_color(row))
+        return colors
