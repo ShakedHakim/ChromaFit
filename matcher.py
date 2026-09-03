@@ -1,8 +1,11 @@
 from color_utils import ColorUtils
 from models import NamedColor
-
+from scoring_strategy import ScoringStrategy, DiscreteScoring
 
 class ColorMatcher:
+
+    def __init__(self, strategy: ScoringStrategy = None):
+        self.strategy = strategy or DiscreteScoring()
 
     NEUTRAL_BASE = 0.7
     NEUTRAL_CONTRAST_BONUS = 0.2
@@ -19,15 +22,7 @@ class ColorMatcher:
             result = self.NEUTRAL_BASE + contrast * self.NEUTRAL_CONTRAST_BONUS
         else:
             dist = ColorUtils.hue_distance(source_hsv[0], candidate_hsv[0])
-
-            if dist < 10:
-                result = 0.75      # same hue
-            elif dist < 30:
-                result = 0.85      # neighboring hue
-            elif dist < 75:
-                result = 0.35      # partial contrast — clashes
-            else:
-                result = 1.0       # complementary
+            result = self.strategy.score_hue_distance(dist)
 
         # shoes lean toward muted colors
         if target_category == "shoes" and candidate_hsv[1] > self.SHOE_MAX_SATURATION:
