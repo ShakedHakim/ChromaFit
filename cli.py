@@ -1,4 +1,4 @@
-from repository import SqliteColorRepository
+from repository_factory import RepositoryFactory
 from stylist_service import StylistService
 
 CATEGORIES = ["top", "bottom", "shoes"]
@@ -39,7 +39,7 @@ def main():
     targets = ask_multiple("\nWhat do you need colors for? (e.g. 2,3)")
     image_path = input("\nImage path: ")
 
-    service = StylistService(SqliteColorRepository())
+    service = StylistService(RepositoryFactory.create("sqlite"))
     result = service.recommend(image_path, targets=targets)
 
     print(f"\nDetected color: {result['dominant']}")
