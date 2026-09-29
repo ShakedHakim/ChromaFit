@@ -24,11 +24,14 @@ class ColorMatcher:
             dist = ColorUtils.hue_distance(source_hsv[0], candidate_hsv[0])
             result = self.strategy.score_hue_distance(dist)
 
-        # shoes lean toward muted colors
-        if target_category == "shoes" and candidate_hsv[1] > self.SHOE_MAX_SATURATION:
-            result *= self.SHOE_PENALTY
+        return self._apply_category_adjustment(result, candidate_hsv, target_category)
 
-        return result
+    def _apply_category_adjustment(self, base_score: float, candidate_hsv: tuple,
+                                   target_category: str) -> float:
+        """Penalize highly saturated candidates for shoes, which lean toward muted colors."""
+        if target_category == "shoes" and candidate_hsv[1] > self.SHOE_MAX_SATURATION:
+            return base_score * self.SHOE_PENALTY
+        return base_score
 
     def score_palette(self, palette: list, candidate: NamedColor,
                       target_category: str) -> float:
