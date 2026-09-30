@@ -1,12 +1,18 @@
 import cv2
+import numpy as np
 
 
 class ImageLoader:
     def __init__(self, path: str):
         self.path = path
 
-    def load(self):
-        return cv2.imread(self.path)
+    def load(self) -> np.ndarray:
+        """Read the image from disk, raising ValueError if it cannot be decoded."""
+        image = cv2.imread(self.path)
+        if image is None:
+            raise ValueError(f"Could not read image at {self.path} - the file may be "
+                             f"corrupted or not a valid image format.")
+        return image
 
     def to_rgb(self, image):
         return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
