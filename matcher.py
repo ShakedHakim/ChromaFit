@@ -18,7 +18,7 @@ class ColorMatcher:
         candidate_hsv = ColorUtils.rgb_to_hsv(candidate.rgb)
 
         if ColorUtils.is_neutral(source_hsv) or ColorUtils.is_neutral(candidate_hsv):
-            contrast = abs(source_hsv[2] - candidate_hsv[2]) / 255
+            contrast = ColorUtils.rgb_distance(color_rgb, candidate.rgb)
             result = self.NEUTRAL_BASE + contrast * self.NEUTRAL_CONTRAST_BONUS
         else:
             dist = ColorUtils.hue_distance(source_hsv[0], candidate_hsv[0])

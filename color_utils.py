@@ -38,3 +38,10 @@ class ColorUtils:
         return (ColorUtils.hue_distance(h1, h2) < hue_tol
                 and abs(s1 - s2) < sat_tol
                 and abs(v1 - v2) < val_tol)
+
+    @staticmethod
+    def rgb_distance(rgb1: tuple, rgb2: tuple) -> float:
+        """Normalized Euclidean distance between two RGB colors, in [0, 1]."""
+        squared_diff = sum((a - b) ** 2 for a, b in zip(rgb1, rgb2))
+        max_squared_diff = 3 * (255 ** 2)
+        return (squared_diff / max_squared_diff) ** 0.5

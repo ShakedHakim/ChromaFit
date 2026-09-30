@@ -33,11 +33,9 @@ class TestColorMatcher(unittest.TestCase):
 
     def test_score_neutral_candidate_uses_base_plus_contrast(self):
         """A neutral candidate bypasses hue distance: NEUTRAL_BASE + contrast bonus."""
-        source_v = ColorUtils.rgb_to_hsv(self.orange)[2]
-        candidate_v = ColorUtils.rgb_to_hsv(self.white.rgb)[2]
+        contrast = ColorUtils.rgb_distance(self.orange, self.white.rgb)
         expected = (ColorMatcher.NEUTRAL_BASE
-                    + abs(source_v - candidate_v) / 255
-                    * ColorMatcher.NEUTRAL_CONTRAST_BONUS)
+                    + contrast * ColorMatcher.NEUTRAL_CONTRAST_BONUS)
 
         actual = self.matcher.score(self.orange, self.white, "bottom")
 

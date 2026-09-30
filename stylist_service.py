@@ -2,6 +2,7 @@ from image_loader import ImageLoader
 from palette_extractor import PaletteExtractor
 from palette_cleaner import PaletteCleaner
 from matcher import ColorMatcher
+from scoring_strategy import ContinuousScoring
 
 
 class StylistService:
@@ -10,7 +11,7 @@ class StylistService:
         self.repository = repository
         self.extractor = PaletteExtractor(n_colors=n_colors)
         self.cleaner = PaletteCleaner()
-        self.matcher = ColorMatcher()
+        self.matcher = ColorMatcher(ContinuousScoring())
 
     def _prepare_image(self, image_path: str):
         #Load and preprocess an image for palette extraction.

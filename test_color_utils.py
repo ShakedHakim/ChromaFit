@@ -46,6 +46,18 @@ class TestColorUtils(unittest.TestCase):
         cool_blue = (120, 255, 200)
         self.assertFalse(ColorUtils.are_similar(warm_orange, cool_blue))
 
+    # --- rgb_distance ---
+
+    def test_rgb_distance_identical_colors_is_zero(self):
+        self.assertEqual(ColorUtils.rgb_distance((234, 84, 0), (234, 84, 0)), 0.0)
+
+    def test_rgb_distance_black_to_white_is_one(self):
+        self.assertAlmostEqual(ColorUtils.rgb_distance((0, 0, 0), (255, 255, 255)), 1.0)
+
+    def test_rgb_distance_single_channel_difference(self):
+        """Black vs pure red differs by 255 in one channel: sqrt(1/3) ≈ 0.57735."""
+        self.assertAlmostEqual(ColorUtils.rgb_distance((0, 0, 0), (255, 0, 0)), 0.57735, places=5)
+
 
 if __name__ == "__main__":
     unittest.main()
