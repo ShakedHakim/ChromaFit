@@ -1,4 +1,4 @@
-from repository import ColorRepository, MockItemRepository, SqliteColorRepository
+from repository import ColorRepository, MockColorRepository, SqliteColorRepository
 
 
 class RepositoryFactory:
@@ -14,7 +14,7 @@ class RepositoryFactory:
         if repo_type == "sqlite":
             return SqliteColorRepository(kwargs.get("db_path", "chromafit.db"))
         if repo_type == "mock":
-            return MockItemRepository()
+            return MockColorRepository()
         raise ValueError(
             f"Unknown repository type: '{repo_type}'. Expected 'sqlite' or 'mock'."
         )

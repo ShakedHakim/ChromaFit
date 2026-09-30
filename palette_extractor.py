@@ -3,13 +3,15 @@ from sklearn.cluster import KMeans
 
 
 class PaletteExtractor:
-    def __init__(self, n_colors: int = 5):
+    def __init__(self, n_colors: int = 5, random_state: int = 42):
         self.n_colors = n_colors
+        self.random_state = random_state
 
     def extract(self, image):
         pixels = image.reshape(-1, 3)
 
-        kmeans = KMeans(n_clusters=self.n_colors, n_init=10)
+        kmeans = KMeans(n_clusters=self.n_colors, n_init=10,
+                        random_state=self.random_state)
         kmeans.fit(pixels)
 
         centers = kmeans.cluster_centers_.astype(int)

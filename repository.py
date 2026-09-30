@@ -11,7 +11,7 @@ class ColorRepository(ABC):
 
 
 
-class MockItemRepository(ColorRepository):
+class MockColorRepository(ColorRepository):
 
     def __init__(self):
         self._colors = [
