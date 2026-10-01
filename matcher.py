@@ -14,6 +14,7 @@ class ColorMatcher:
 
     def score(self, color_rgb: tuple, candidate: NamedColor,
               target_category: str) -> float:
+        """Score how well a candidate color pairs with a single source color."""
         source_hsv = ColorUtils.rgb_to_hsv(color_rgb)
         candidate_hsv = ColorUtils.rgb_to_hsv(candidate.rgb)
 
@@ -35,6 +36,7 @@ class ColorMatcher:
 
     def score_palette(self, palette: list, candidate: NamedColor,
                       target_category: str) -> float:
+        """Score a candidate against a whole palette, weighting each color by its share."""
         total = 0.0
         for color, weight in palette:
             total += self.score(color, candidate, target_category) * weight
@@ -42,6 +44,7 @@ class ColorMatcher:
 
     def recommend_colors(self, palette: list, colors: list,
                          targets: list, top_n: int = 3) -> dict:
+        """Return the top_n highest-scoring candidates for each target category."""
         result = {}
 
         for category in targets:

@@ -7,21 +7,21 @@ import numpy as np
 class ColorUtils:
     @staticmethod
     def rgb_to_hsv(rgb: tuple) -> tuple:
-    #convert RGB to HSV. H: 0-179, S: 0-255, V: 0-255.
+        """Convert RGB to HSV. H: 0-179, S: 0-255, V: 0-255."""
         pixel = np.uint8([[list(rgb)]])
         hsv = cv2.cvtColor(pixel, cv2.COLOR_RGB2HSV)
         return tuple(int(c) for c in hsv[0][0])
 
     @staticmethod
     def hue_distance(h1: int, h2: int) -> int:
-    #find the shortest distance between two hues on the color wheel
+        """Find the shortest distance between two hues on the color wheel."""
         diff = abs(h1 - h2)
         distance = min(diff, 180 - diff)
         return distance
 
     @staticmethod
     def is_neutral(hsv: tuple, sat_tol: int = 40, dark_tol: int = 60) -> bool:
-        #True for blacks, whites, greys and other low-saturation colors.
+        """True for blacks, whites, greys and other low-saturation colors."""
         h, s, v = hsv
 
         if s < sat_tol:
@@ -32,6 +32,7 @@ class ColorUtils:
 
     @staticmethod
     def are_similar(hsv1: tuple, hsv2: tuple, hue_tol: int = 10, sat_tol: int = 40, val_tol: int = 40) -> bool:
+        """True if two HSV colors are within the hue, saturation and value tolerances."""
         h1, s1, v1 = hsv1
         h2, s2, v2 = hsv2
 

@@ -8,6 +8,7 @@ class PaletteExtractor:
         self.random_state = random_state
 
     def extract(self, image):
+        """Cluster the image's pixels and return (color, weight) pairs sorted by weight."""
         pixels = image.reshape(-1, 3)
 
         kmeans = KMeans(n_clusters=self.n_colors, n_init=10,

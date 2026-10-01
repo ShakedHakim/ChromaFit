@@ -15,13 +15,16 @@ class ImageLoader:
         return image
 
     def to_rgb(self, image):
+        """Convert an OpenCV BGR image to RGB."""
         return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     def resize(self, image, width: int = 200, height: int = 200):
+        """Resize the image to the given width and height."""
         return cv2.resize(image, (width, height))
 
 
     def crop_center(self, image, ratio: float = 0.5):
+        """Crop the central region of the image, keeping the given fraction of each side."""
         h, w, _ = image.shape
         new_h, new_w = int(h * ratio), int(w * ratio)
         start_h, start_w = (h - new_h) // 2, (w - new_w) // 2
