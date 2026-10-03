@@ -36,6 +36,18 @@ class TestColorUtils(unittest.TestCase):
         orange = ColorUtils.rgb_to_hsv((234, 84, 0))
         self.assertFalse(ColorUtils.is_neutral(orange))
 
+    # --- is_earthy_tone ---
+
+    def test_is_earthy_tone_dark_muted_brown(self):
+        brown = ColorUtils.rgb_to_hsv((80, 50, 45))
+        self.assertTrue(ColorUtils.is_earthy_tone(brown))
+
+    def test_is_earthy_tone_rejects_saturated_orange_and_blue(self):
+        """A fully saturated orange and a blue are regular hued colors, not earth tones."""
+        for rgb in [(234, 84, 0), (15, 77, 133)]:
+            with self.subTest(rgb=rgb):
+                self.assertFalse(ColorUtils.is_earthy_tone(ColorUtils.rgb_to_hsv(rgb)))
+
     # --- are_similar ---
 
     def test_are_similar_near_identical_colors(self):

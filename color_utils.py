@@ -41,6 +41,15 @@ class ColorUtils:
                 and abs(v1 - v2) < val_tol)
 
     @staticmethod
+    def is_earthy_tone(hsv: tuple, hue_max: int = 25, hue_min_wrap: int = 170,
+                       sat_range: tuple = (60, 200), val_range: tuple = (40, 140)) -> bool:
+        """True for muted, darker reds/oranges (browns, rust) that is_neutral() doesn't catch."""
+        h, s, v = hsv
+        return ((h <= hue_max or h >= hue_min_wrap)
+                and sat_range[0] <= s <= sat_range[1]
+                and val_range[0] <= v <= val_range[1])
+
+    @staticmethod
     def rgb_distance(rgb1: tuple, rgb2: tuple) -> float:
         """Normalized Euclidean distance between two RGB colors, in [0, 1]."""
         squared_diff = sum((a - b) ** 2 for a, b in zip(rgb1, rgb2))

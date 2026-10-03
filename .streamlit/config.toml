@@ -1,0 +1,15 @@
+[server]
+# Serve the product images in static/ at app/static/...
+enableStaticServing = true
+
+[theme]
+base = "light"
+primaryColor = "#2A9D8F"
+backgroundColor = "#F7EFE3"
+secondaryBackgroundColor = "#E8D4B8"
+textColor = "#1B2A4A"
+font = "sans serif"
+
+[client]
+# Hide the Deploy button and developer menu
+toolbarMode = "minimal"
