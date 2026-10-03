@@ -47,7 +47,7 @@ class TestColorMatcher(unittest.TestCase):
         self.assertAlmostEqual(actual, expected)
 
     def test_score_saturated_candidate_penalized_for_shoes(self):
-        """Candidates above SHOE_MAX_SATURATION score lower for shoes than for bottoms."""
+        """Candidates above SHOE_MAX_VIVIDNESS score lower for shoes than for bottoms."""
         as_shoes = self.matcher.score(self.blue, self.saturated_orange, "shoes")
         as_bottom = self.matcher.score(self.blue, self.saturated_orange, "bottom")
         self.assertLess(as_shoes, as_bottom)
@@ -69,6 +69,44 @@ class TestColorMatcher(unittest.TestCase):
                                                ["bottom", "shoes"], top_n=2)
         names = {category: [c.name for c, _ in scored] for category, scored in result.items()}
         self.assertNotEqual(names["bottom"], names["shoes"])
+
+    def test_score_black_source_shoes_prefer_navy_and_brown_over_loud_colors(self):
+        black = (40, 40, 40)
+        wearable = [NamedColor("navy", (1, 21, 62)), NamedColor("brown", (101, 55, 0))]
+        loud = [NamedColor("lemon", (253, 255, 82)), NamedColor("violet pink", (251, 95, 252))]
+        for good in wearable:
+            for bad in loud:
+                with self.subTest(good=good.name, bad=bad.name):
+                    self.assertGreater(self.matcher.score(black, good, "shoes"),
+                                       self.matcher.score(black, bad, "shoes"))
+
+    def test_shoe_adjustment_keeps_known_good_shoe_colors(self):
+        """Wearable shoe colors, including dark saturated ones, are not penalized."""
+        good = {"navy": (1, 21, 62), "brown": (101, 55, 0), "olive": (110, 117, 14), "tan": (209, 178, 111),
+                "burgundy": (97, 0, 35), "white": (255, 255, 255), "black": (0, 0, 0), "grey": (146, 149, 145)}
+        for name, rgb in good.items():
+            with self.subTest(color=name):
+                hsv = ColorUtils.rgb_to_hsv(rgb)
+                self.assertEqual(self.matcher._apply_category_adjustment(1.0, hsv, "shoes"), 1.0)
+
+    def test_score_tinted_dark_source_is_scored_like_a_neutral_source(self):
+        """A dark, slightly tinted grey (a photographed black item) no longer gets its neon complement at full score."""
+        tinted_dark = (62, 58, 70)                           # H = 130, S = 44, V = 70: not caught by is_neutral()
+        lime = NamedColor("electric lime", (168, 255, 4))
+        expected = (ColorMatcher.NEUTRAL_BASE
+                    + ColorUtils.rgb_distance(tinted_dark, lime.rgb) * ColorMatcher.NEUTRAL_CONTRAST_BONUS)
+        self.assertAlmostEqual(self.matcher.score(tinted_dark, lime, "top"), expected)
+
+    def test_recommend_colors_tinted_dark_source_shoes_get_no_vivid_picks(self):
+        tinted_dark = (62, 58, 70)
+        candidates = [NamedColor("electric lime", (168, 255, 4)), NamedColor("lemon", (253, 255, 82)),
+                      NamedColor("bright yellow", (255, 253, 1)), NamedColor("cyan", (0, 255, 255)),
+                      NamedColor("navy", (1, 21, 62)), NamedColor("brown", (101, 55, 0)),
+                      self.white, NamedColor("black", (0, 0, 0)), NamedColor("grey", (146, 149, 145))]
+        picks = self.matcher.recommend_colors([(tinted_dark, 1.0)], candidates, ["shoes"], top_n=5)["shoes"]
+        for color, _ in picks:
+            with self.subTest(color=color.name):
+                self.assertLessEqual(ColorUtils.vividness(ColorUtils.rgb_to_hsv(color.rgb)), 0.6)
 
     def test_score_non_earthy_source_uses_hue_distance_strategy(self):
         """A saturated (non-earthy) source is still scored purely by the hue-distance strategy."""

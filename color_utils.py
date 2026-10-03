@@ -41,6 +41,11 @@ class ColorUtils:
                 and abs(v1 - v2) < val_tol)
 
     @staticmethod
+    def vividness(hsv: tuple) -> float:
+        """How loud a color is, in [0, 1]: saturation times brightness (neon colors are close to 1)."""
+        return (hsv[1] / 255) * (hsv[2] / 255)
+
+    @staticmethod
     def is_earthy_tone(hsv: tuple, hue_max: int = 25, hue_min_wrap: int = 170,
                        sat_range: tuple = (60, 200), val_range: tuple = (40, 140)) -> bool:
         """True for muted, darker reds/oranges (browns, rust) that is_neutral() doesn't catch."""

@@ -9,8 +9,19 @@ class ColorMatcher:
 
     NEUTRAL_BASE = 0.7
     NEUTRAL_CONTRAST_BONUS = 0.2
-    SHOE_MAX_SATURATION = 180
+    # Shoes lean toward muted, wearable colors. The penalty uses vividness (S*V) rather than saturation
+    # alone: dark saturated colors such as navy, brown, olive and burgundy (vividness <= 0.4) are fine
+    # for shoes, while bright loud ones such as lemon or violet pink (0.6+) are not.
+    SHOE_MAX_VIVIDNESS = 0.5
     SHOE_PENALTY = 0.6
+    # A photographed black garment often comes out as a dark, slightly tinted grey that is_neutral()
+    # misses (V >= 60, S >= 40). Scoring it by hue would recommend its neon complement, so sources
+    # darker and less saturated than these limits are scored like neutral sources instead.
+    NEAR_BLACK_MAX_VALUE = 80
+    NEAR_BLACK_MAX_SATURATION = 120
+    # In the neutral path, contrast against a dark source always means "light", which pushes shoes to
+    # pastels. For shoes, this share of the contrast bonus rewards depth (darker = better) instead.
+    SHOE_DEPTH_WEIGHT = 0.5
     EARTHY_BASE = 0.6
     EARTHY_HUE_WEIGHT = 0.15
     EARTHY_PROFILE_WEIGHT = 0.15
@@ -32,9 +43,9 @@ class ColorMatcher:
         source_hsv = ColorUtils.rgb_to_hsv(color_rgb)
         candidate_hsv = ColorUtils.rgb_to_hsv(candidate.rgb)
 
-        if ColorUtils.is_neutral(source_hsv) or ColorUtils.is_neutral(candidate_hsv):
-            contrast = ColorUtils.rgb_distance(color_rgb, candidate.rgb)
-            result = self.NEUTRAL_BASE + contrast * self.NEUTRAL_CONTRAST_BONUS
+        if (ColorUtils.is_neutral(source_hsv) or ColorUtils.is_neutral(candidate_hsv)
+                or self._is_near_black(source_hsv)):
+            result = self._score_neutral(color_rgb, candidate, candidate_hsv, target_category)
         elif ColorUtils.is_earthy_tone(source_hsv):
             result = self._score_earthy(source_hsv, candidate_hsv, target_category)
         else:
@@ -42,6 +53,21 @@ class ColorMatcher:
             result = self.strategy.score_hue_distance(dist)
 
         return self._apply_category_adjustment(result, candidate_hsv, target_category)
+
+    def _is_near_black(self, source_hsv: tuple) -> bool:
+        """True for dark, slightly tinted sources that is_neutral() misses; earth tones keep their own path."""
+        return (source_hsv[2] < self.NEAR_BLACK_MAX_VALUE
+                and source_hsv[1] < self.NEAR_BLACK_MAX_SATURATION
+                and not ColorUtils.is_earthy_tone(source_hsv))
+
+    def _score_neutral(self, color_rgb: tuple, candidate: NamedColor, candidate_hsv: tuple,
+                       target_category: str) -> float:
+        """Base plus contrast bonus; for shoes part of the bonus rewards depth instead of contrast."""
+        contrast = ColorUtils.rgb_distance(color_rgb, candidate.rgb)
+        if target_category == "shoes":
+            depth = 1 - candidate_hsv[2] / 255
+            contrast = (1 - self.SHOE_DEPTH_WEIGHT) * contrast + self.SHOE_DEPTH_WEIGHT * depth
+        return self.NEUTRAL_BASE + contrast * self.NEUTRAL_CONTRAST_BONUS
 
     def _score_earthy(self, source_hsv: tuple, candidate_hsv: tuple,
                       target_category: str) -> float:
@@ -70,8 +96,8 @@ class ColorMatcher:
 
     def _apply_category_adjustment(self, base_score: float, candidate_hsv: tuple,
                                    target_category: str) -> float:
-        """Penalize highly saturated candidates for shoes, which lean toward muted colors."""
-        if target_category == "shoes" and candidate_hsv[1] > self.SHOE_MAX_SATURATION:
+        """Penalize vivid (bright and saturated) candidates for shoes, which lean toward muted colors."""
+        if target_category == "shoes" and ColorUtils.vividness(candidate_hsv) > self.SHOE_MAX_VIVIDNESS:
             return base_score * self.SHOE_PENALTY
         return base_score
 
